@@ -101,10 +101,11 @@ With the help of data structure and two utility functions, we can implement the 
 # LFU
 
 Least frequently used mechanism, as the name suggests, requires keeping track of frequencies of each key.
-Following the leetcode problem prompt and API restrictions as follows
+Following the leetcode [problem prompt][] and API restrictions as follows
 - LFU cache constructor takes an arugment of int capacity
 - LFU maintains a user counter for each key.
-
+- `int get(key)` to obtain the value of given key
+- `void put(key, value)` set thew new pair of 
 
 # Snapshot  Based KV
 

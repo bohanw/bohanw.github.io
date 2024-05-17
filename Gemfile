@@ -13,8 +13,8 @@ gem "jekyll", "~> 4.3.3"
 # uncomment the line below. To upgrade, run `bundle update github-pages`.
 # gem "github-pages","~>231", group: :jekyll_plugins
 gem "minimal-mistakes-jekyll"
-gem 'jekyll-toc'
-
+gem "jekyll-toc"
+gem "jemoji"
 # If you have any plugins, put them here!
 gem "webrick"
 group :jekyll_plugins do

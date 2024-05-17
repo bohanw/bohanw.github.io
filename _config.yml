@@ -40,7 +40,7 @@ plugins:
   - jekyll-feed
   - jemoji
   - jekyll-include-cache
-locale                   : "en-US"
+locale: "en-US"
 
 # Exclude from processing.
 # The following items will not be processed, by default.

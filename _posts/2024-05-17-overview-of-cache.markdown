@@ -1,6 +1,6 @@
 ---
 layout: single
-title:  "Overview of KV store interview problems"
+title:  "Overview of KV store Interview Problems"
 ---
 
 Over the several months of interviews I frequently encountered problems to design KV store, cache, of various flavors. This post is intended to summarize thought processes to following problems, and to identify any patterns, if possible, to similar problems. For simplicity, I will assume all key values in these problems are integers.
@@ -101,13 +101,21 @@ With the help of data structure and two utility functions, we can implement the 
 # LFU
 
 Least frequently used mechanism, as the name suggests, requires keeping track of frequencies of each key.
+Following the leetcode problem prompt and API restrictions as follows
+- LFU cache constructor takes an arugment of int capacity
+- LFU maintains a user counter for each key.
+
 
 # Snapshot  Based KV
 
 This is a popular phone screen question from a startup,very similar to Leetcode 1146.
+
+# Rank Cache
+
 # Transactional KV store
 
 # Expiry Priority Cache
 
 # Review
 - Understand the problem is crucial with communication with the interviewer. 
+- 

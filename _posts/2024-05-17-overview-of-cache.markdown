@@ -117,7 +117,7 @@ Next, we need a hashmap to store key-value pairs. We design the cache to include
     // Track key, <frequency, cache value> look up by the key
     private HashMap<Integer, Pair<Integer,Integer>> keyToFreqValuePairMap;
 ```
-As the problem statements hint, need LRU policy to elect the evicted key more than one LFU keys. One may leverage `LinkedHashSet` in Java as the underlying implementation is doubly linked list. 
+As the problem statements hint, need LRU policy to elect the evicted key more than one LFU keys. One may leverage `LinkedHashSet` in Java as the underlying implementation is doubly linked list. Another option is to use `ArrayDeque`.
 ```java
     // frequencyt to set of keys with such frequency
     private HashMap<Integer, LinkedHashSet<Integer>> frequencyList;
@@ -128,13 +128,13 @@ For `get(key)`,
 - increment frequnecy related to key
 -- remove key from list of keys by frequecy from `frequencyList`
 -- clean up frequencyList if no such frequency exists inside cache
--- if he removed key is minFreq, update the minFreq
+-- if the removed key is minFreq, update the minFreq
 
 For `put(key, value)`
 
 For cache eviction, use the iterator `next()` API call from the value of LinkedHashSet to obtain the next candidate to be evicted.
 - Get the frequency-value pair from the `keyToFreqValuePairMap`.
--  
+- 
 # Snapshot Based KV
 
 This is a phone screen question from a startup, very similar to [Leetcode 1146](https://leetcode.com/problems/snapshot-array/description/).

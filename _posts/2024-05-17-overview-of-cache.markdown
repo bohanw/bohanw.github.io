@@ -142,11 +142,11 @@ This is a phone screen question from a startup, very similar to [Leetcode 1146](
 Key difference is inthe `get()` API, expected API
 ```java
     public int get(int index, int snap_id) ;
-
 ```
+From this API the cache needs 
 
-
-
+## Time based cache
+A very similar problem
 
 # Rank Cache
 

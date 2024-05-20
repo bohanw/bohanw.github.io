@@ -1,5 +1,5 @@
 ---
-layout: single
+layout: post
 title:  "Overview of KV store Interview Problems"
 ---
 
@@ -133,11 +133,18 @@ For `get(key)`,
 For `put(key, value)`
 
 For cache eviction, use the iterator `next()` API call from the value of LinkedHashSet to obtain the next candidate to be evicted.
-- Get the frequency-value pair from the `keyToFreqValuePairMap`.
-- 
+- Get the frequency-value pair from the `keyToFreqValuePairMap` if input key already exists, update  new value, update frequency and return
+- otherwise. First check if capacity is reached. Eviction is reached, otherwise, this is a new key , set its freq to 1 and  reset minFreq = 1, insert the key to cache
+
 # Snapshot Based KV
 
 This is a phone screen question from a startup, very similar to [Leetcode 1146](https://leetcode.com/problems/snapshot-array/description/).
+Key difference is inthe `get()` API, expected API
+```java
+    public int get(int index, int snap_id) ;
+
+```
+
 
 
 

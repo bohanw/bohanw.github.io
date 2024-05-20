@@ -99,17 +99,47 @@ With the help of data structure and two utility functions, we can implement the 
 ```
 
 # LFU
-
 Least frequently used mechanism, as the name suggests, requires keeping track of frequencies of each key.
-Following the leetcode [problem prompt][] and API restrictions as follows
+Following the leetcode [problem prompt](https://leetcode.com/problems/lfu-cache) and API restrictions as follows
 - LFU cache constructor takes an arugment of int capacity
-- LFU maintains a user counter for each key.
+- LFU maintains a user counter for each key to track frequency.
 - `int get(key)` to obtain the value of given key
-- `void put(key, value)` set thew new pair of 
+- `void put(key, value)` set thew new (key,value) entry inside cache. If full, eviction policy follows choosing the least frequently used key based on the user counter. If multiple candidates, following LRU policy to choose the candidate among these keys. 
 
-# Snapshot  Based KV
+The above requirements bring the constructor and data structures of how 
+```java
+    private int minFreq; // user counter
+    private int cap;  // capacity
+```
+Next, we need a hashmap to store key-value pairs. We design the cache to include the frequency value as a compounded value pairs
 
-This is a popular phone screen question from a startup,very similar to Leetcode 1146.
+```java
+    // Track key, <frequency, cache value> look up by the key
+    private HashMap<Integer, Pair<Integer,Integer>> keyToFreqValuePairMap;
+```
+As the problem statements hint, need LRU policy to elect the evicted key more than one LFU keys. One may leverage `LinkedHashSet` in Java as the underlying implementation is doubly linked list. 
+```java
+    // frequencyt to set of keys with such frequency
+    private HashMap<Integer, LinkedHashSet<Integer>> frequencyList;
+```
+
+For `get(key)`,
+- attempt to obtain value and its frequency given key from the `keyToFreqValuePairMap`. 
+- increment frequnecy related to key
+-- remove key from list of keys by frequecy from `frequencyList`
+-- clean up frequencyList if no such frequency exists inside cache
+-- if he removed key is minFreq, update the minFreq
+
+For `put(key, value)`
+
+For cache eviction, use the iterator `next()` API call from the value of LinkedHashSet to obtain the next candidate to be evicted.
+- Get the frequency-value pair from the `keyToFreqValuePairMap`.
+-  
+# Snapshot Based KV
+
+This is a phone screen question from a startup, very similar to [Leetcode 1146](https://leetcode.com/problems/snapshot-array/description/).
+
+
 
 # Rank Cache
 
@@ -117,6 +147,10 @@ This is a popular phone screen question from a startup,very similar to Leetcode 
 
 # Expiry Priority Cache
 
-# Review
-- Understand the problem is crucial with communication with the interviewer. 
-- 
+# Reflection
+- Understand the problem and asking any clarifying questions are crucial in success. Unlike many other algorithms-heavy coding problems, above design problems need more communications about thought process to address the cache features and describe what data structures and how chosen data structures address these requirements.
+- Try and clarify any confusions during the interview. For interactive problems like
+- Practice "communicating over pseudocode/typing". I believe success of solving above problems rely more on effectiveness of thought process. I was not comfortable typing and talking together in a virtual interview at first, and I realized how much time I have spent not producing effective code in a short time. Thought process is important but in the end interviewers need to see some code as deliverables. My personal way is to jot down key algorithms/data structures and reasoning behind it, and highlevel todos on implementation
+For instance, I will jot down I need hashmap and 
+- Be very comfortable on common data structures in your interviewing programming language and common APIs and their time complexity. If possible, getting familiar with implementation of each data structure. For example, difference and time complexity of Java `HashMap` and `TreeMap`, C++ `std::unordered_map` and `std::map`.
+- Since 2023/2024, I have observed increaseing difficulties in coding challenges. The challenge is not necesarily on difficult algorithms or tricky math theorems or bit manupulations, but more on a combinations of code completion, code speed, time to reach a well-organized solution and effective communications to interviewer. Many problems are framed as follow ups to easier first problem or multiple series. I experienced many design-like problems in both screen and onsite, so practicing all above is worthwhile. Different companies may have different interview expecations or emphasis, and it is perfectly fine to ask and clarify any requirements in advance(how many problems each round, focusing on thought process or completion, etc).

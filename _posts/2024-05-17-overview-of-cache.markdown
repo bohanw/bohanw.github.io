@@ -203,15 +203,10 @@ class TimeMap {
         map.put(key, pairs);
     }
     
-    /*
-    1. key has only one hashmap {timestamp, value},  input timestamp  < 
-    2. key doesn't exist -> ""
-    3. key has multiple values, such as  foo,  {{1, bar}, {4, bar2}} 
-        get(foo, 1) => return bar
-        get(foo, 3) => return bar
-        get(foo, 5) => bar2
-        timestamp array : [1,4,5], timestamp = 3, want to return 1
-    */
+    /**
+     * get the value closest to the given timestamp of given key
+     * if key doesn't exist return empty string 
+     */
     public String get(String key, int timestamp){
         if(!map.containsKey(key)){
             return "";

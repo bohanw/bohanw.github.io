@@ -1,14 +1,13 @@
 ---
 layout: post
-title:  "SystemVerilog constraint of Queue"
+title:  "SystemVerilog constraint of Random Input Array Distribution to Queues"
 ---
 
-This is an very interesting SV constraint problem I came across in FAANG design verification screen. Inside a SV class, given a input associative array, and three queues, after `class.randomize()` function call, would like to randomly distribute elements in  associative array to three queues. 
+This is an very interesting SV constraint problem I came across in a FAANG design verification screen. Inside a SV class, given a input associative array, and three queues, after `class.randomize()` function call, would like to randomly distribute elements in  associative array to three queues. 
 
 I struggled a lot with the this interview question. After some experimentation I think the challenge are what are the random variables in the class, what constraints are required and how to distribute and populate the output queues. 
 My approach is to define random queue that define and assignment of `input_array` in the same index. I will use `post_randomize()` function to populate elements of three queues in input_array based on the assingment from `queue_assignments`
 
-Full code
 ```verilog
 class Packet;
     // Assuming the elements are of type int
@@ -54,16 +53,13 @@ module tb;
   bit[3:0] num;
   // Create a new packet, randomize it and display contents
   initial begin
-    pkt = new({1, 2, 3, 4, 5,6,7,8,9});
-  
-
-      if(!pkt.randomize())
+    pkt = new({1, 2, 3, 4, 5, 6, 7, 8, 9});
+    if(!pkt.randomize()) begin
         $error("fail to rand");
-    
+    end
     $display("queue1", pkt.queue1);
     $display("queue2", pkt.queue2);
     $display("queue3", pkt.queue3);
-
   end 
 endmodule
 ```

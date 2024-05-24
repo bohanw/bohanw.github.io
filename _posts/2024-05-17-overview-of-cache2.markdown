@@ -99,7 +99,7 @@ With the help of data structure and two utility functions, we can implement the 
     }
 ```
 
-## LFU
+##LFU
 Least frequently used mechanism, as the name suggests, requires keeping track of frequencies of each key.
 Following the leetcode [problem prompt](https://leetcode.com/problems/lfu-cache) and API restrictions as follows
 - LFU cache constructor takes an arugment of int capacity
@@ -173,64 +173,18 @@ Note the implementation of inner map interface can be as simple as hashmap, or a
         return arr.get(index).floorEntry(snap_id).getValue();
     }
 ```
-Time complexity:
-
 
 ## Time based KV 
-This is the [leetcode 981](https://leetcode.com/problems/time-based-key-value-store/). The prmpot is to design a data structure that 
-- stores multiple values for the same key 
-- able to retrieve the key's value at a certain timestamp.
 
-Specifically, `String get(String key, int timestamp)` returns a value such that set was called previously, with `timestamp_prev <= timestamp`. If there are multiple such values, it returns the value associated with the largest timestamp_prev. If there are no values, it returns "".
+## Rank Cache
 
-The approach is very similar to the snapshot id. Timestamp by naturally is auto incrementing, so we can design the hashmap with key is key string, and value a TreeMap of <timestamp, value> as entries. 
+## Transactional KV store
 
-```java
-class TimeMap {
+## Expiry Priority Cache
 
-    private HashMap<String, TreeMap<Integer, String>> map; // {key, to a hashmap of {timestamp, value pairs}
-    
-    public TimeMap(){
-        map = new HashMap<>();    
-    }
-    
-    public void set(String key, String value, int timestamp){
-        if(!map.containsKey(key)){
-            map.put(key, new TreeMap<>());
-        }
-        TreeMap<Integer, String> pairs = map.get(key);
-        pairs.put(timestamp, value);
-        map.put(key, pairs);
-    }
-    
-    /*
-    1. key has only one hashmap {timestamp, value},  input timestamp  < 
-    2. key doesn't exist -> ""
-    3. key has multiple values, such as  foo,  {{1, bar}, {4, bar2}} 
-        get(foo, 1) => return bar
-        get(foo, 3) => return bar
-        get(foo, 5) => bar2
-        timestamp array : [1,4,5], timestamp = 3, want to return 1
-    */
-    public String get(String key, int timestamp){
-        if(!map.containsKey(key)){
-            return "";
-        }
-        TreeMap<Integer, String> values = map.get(key);
-        
-        Map.Entry<Integer, String> entry = values.floorEntry(timestamp);
-        
-        if(entry != null){
-            String val = entry.getValue();
-            return val;
-        }
-        else {
-            return "";
-        }
-    }
-}
-```
-
-Time complexity: Assume the average inner TreeMap size is N.
-- `set()`: standalone `set()` call takes O(logN) since outer hashmap takes O(1) to access and inner treeMap put/get dominates the 
-- `get()`: hashmap get(key) takes O(1) time, and finding the `floorEntry` takes O(logN). 
+## Reflection
+- Understand the problem and asking any clarifying questions are crucial in success. Unlike many other algorithms-heavy coding problems, above design problems need more communications about thought process to address the cache features and describe what data structures and how chosen data structures address these requirements.
+- Try and clarify any confusions during the interview. For interactive and open-ended problems, one may waste time working on a solution trivial or completely incorrect from the requirements from the interviewer. 
+- Practice "communicating over pseudocode/typing". I believe success of solving above problems rely more on effectiveness of thought process. I was not comfortable typing and talking together in a virtual interview at first, and I realized how much time I have spent not producing effective code in a short time. Thought process is important but in the end interviewers need to see some code as deliverables. My personal way is to jot down key algorithms/data structures and reasoning behind it, and highlevel todos on implementation. For instance, I will jot down I need hashmap and doubly linked list, and why it will 
+- Be very comfortable on common data structures in your interviewing programming language and common APIs and their time complexity. If possible, getting familiar with implementation of each data structure. For example, difference and time complexity of Java `HashMap` and `TreeMap`, C++ `std::unordered_map` and `std::map`.
+- Since 2023/2024, I have observed increaseing difficulties in coding challenges. The challenge is not necesarily on difficult algorithms or tricky math theorems or bit manupulations, but more on a combinations of code completion, code speed, time to reach a well-organized solution and effective communications to interviewer. Many problems are framed as follow ups to easier first problem or multiple series. I experienced many design-like problems in both screen and onsite, so practicing all above is worthwhile. Different companies may have different interview expecations or emphasis, and it is perfectly fine to ask and clarify any requirements in advance(how many problems each round, focusing on thought process or completion, etc).

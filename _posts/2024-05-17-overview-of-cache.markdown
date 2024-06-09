@@ -1,6 +1,6 @@
 ---
 layout: single
-title:  "Overview of KV store Interview Problems"
+title:  "Overview of KV store interview problems"
 ---
 
 Over the several months of interviews I frequently encountered problems to design KV store, cache, of various flavors. This post is intended to summarize thought processes to following problems, and to identify any patterns, if possible, to similar problems. For simplicity, I will assume all key values in these problems are integers.
@@ -110,13 +110,9 @@ Following the leetcode [problem prompt][] and API restrictions as follows
 # Snapshot  Based KV
 
 This is a popular phone screen question from a startup,very similar to Leetcode 1146.
-
-# Rank Cache
-
 # Transactional KV store
 
 # Expiry Priority Cache
 
 # Review
 - Understand the problem is crucial with communication with the interviewer. 
-- 

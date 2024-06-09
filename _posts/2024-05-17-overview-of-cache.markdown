@@ -1,13 +1,14 @@
 ---
-layout: single
-title:  "Overview of KV store interview problems"
+layout: post
+title:  "Overview of KV store Interview Problems I"
+tag: "coding"
 ---
 
 Over the several months of interviews I frequently encountered problems to design KV store, cache, of various flavors. This post is intended to summarize thought processes to following problems, and to identify any patterns, if possible, to similar problems. For simplicity, I will assume all key values in these problems are integers.
 
 For cache, at least it should support the put(k, v) and get(k) API. Eviction logic is also critical key. 
 
-# LRU
+## LRU
 
 LRU cache, from the leetcode quesiton prompt, takes a capacity argument for maximum size and, two API get and put() in average O(1) time complexity.  Key challenge is to maintain the least-recently used  
 
@@ -98,21 +99,133 @@ With the help of data structure and two utility functions, we can implement the 
     }
 ```
 
-# LFU
-
+## LFU
 Least frequently used mechanism, as the name suggests, requires keeping track of frequencies of each key.
-Following the leetcode [problem prompt][] and API restrictions as follows
+Following the leetcode [problem prompt](https://leetcode.com/problems/lfu-cache) and API restrictions as follows
 - LFU cache constructor takes an arugment of int capacity
-- LFU maintains a user counter for each key.
+- LFU maintains a user counter for each key to track frequency.
 - `int get(key)` to obtain the value of given key
-- `void put(key, value)` set thew new pair of 
+- `void put(key, value)` set thew new (key,value) entry inside cache. If full, eviction policy follows choosing the least frequently used key based on the user counter. If multiple candidates, following LRU policy to choose the candidate among these keys. 
 
-# Snapshot  Based KV
+The above requirements bring the constructor and data structures of how 
+```java
+    private int minFreq; // user counter
+    private int cap;  // capacity
+```
+Next, we need a hashmap to store key-value pairs. We design the cache to include the frequency value as a compounded value pairs
 
-This is a popular phone screen question from a startup,very similar to Leetcode 1146.
-# Transactional KV store
+```java
+    // Track key, <frequency, cache value> look up by the key
+    private HashMap<Integer, Pair<Integer,Integer>> keyToFreqValuePairMap;
+```
+As the problem statements hint, need LRU policy to elect the evicted key more than one LFU keys. One may leverage `LinkedHashSet` in Java as the underlying implementation is doubly linked list. Another option is to use `ArrayDeque`.
+```java
+    // frequency to set of keys with such frequency
+    private HashMap<Integer, LinkedHashSet<Integer>> frequencyList;
+```
 
-# Expiry Priority Cache
+For `get(key)`,
+- attempt to obtain value and its frequency given key from the `keyToFreqValuePairMap`. 
+- increment frequnecy related to key
+-- remove key from list of keys by frequecy from `frequencyList`
+-- clean up frequencyList if no such frequency exists inside cache
+-- if the removed key is minFreq, update the minFreq
 
-# Review
-- Understand the problem is crucial with communication with the interviewer. 
+For `put(key, value)`
+
+For cache eviction, use the iterator `next()` API call from the value of LinkedHashSet to obtain the next candidate to be evicted.
+- Get the frequency-value pair from the `keyToFreqValuePairMap` if input key already exists, update  new value, update frequency and return
+- otherwise. First check if capacity is reached. Eviction is reached, otherwise, this is a new key , set its freq to 1 and  reset minFreq = 1, insert the key to cache
+
+## Snapshot Based KV
+This is a phone screen question from a startup, very similar to [Leetcode 1146](https://leetcode.com/problems/snapshot-array/description/).
+Key difference is inthe `get()` API, expected API to take both index/key, and a snapshot_id. The output is the value of given index at the time snapshot `snap_id` was taken. 
+- A clarifying question worth asking is what if there is no match of `snap_id` of a given index? Assume the qeustions asks to find the maximum closest `snap_id`. 
+
+```java
+    public int get(int index, int snap_id) ;
+```
+Snapshot KV class need to track the current snapshot id, as an always increment key and increment whenver a ` void snap()` API is called.
+Data structure choice can be nested map, where the outer layer is hashmap, key is index/key, and value is another map. The key of inner map is snapshot id, and value of inner map is value at snapshot id. 
+```java
+    private Map<Integer, TreeMap<Integer, Integer>> snapshotCache;
+```
+Note the implementation of inner map interface can be as simple as hashmap, or a treemap wiht ordering of keys. Note one need to give clear explanation of pros and cons of each choice. A hashmap is fast for set and get value, however to address the snapshot requirements of finding the closest maximum snapshot id, worst case can be O(N) since hashmap provides no ordering of keys. If keys are sorted, it is equivalent to do a binary search over order keys to find the closest snapshot_id. TreeMap will be the better choice since it gives O(log N) time complexity over the binary search. 
+
+```java
+
+    //brute force using linear scan using hashmap
+    public int get(int index, int snap_id) {
+        HashMap<Integer,Integer> map = arr.get(index);
+        int maxKey = Integer.MIN_VALUE;
+        int resultKey = maxKey;
+        for(Map.Entry<Integer, Integer> e : map.entrySet()){
+           int key = e.getKey();
+           if(key <= snap_id){
+               resultKey = Math.max(resultKey, key);
+           } 
+        }
+        return map.get(resultKey);
+    }
+
+    //using treemap and floorEntry() to binary search on snap_id
+    public int get(int index, int snap_id) {
+        return arr.get(index).floorEntry(snap_id).getValue();
+    }
+```
+Time complexity:
+
+
+## Time based KV 
+This is the [leetcode 981](https://leetcode.com/problems/time-based-key-value-store/). The prmpot is to design a data structure that 
+- stores multiple values for the same key 
+- able to retrieve the key's value at a certain timestamp.
+
+Specifically, `String get(String key, int timestamp)` returns a value such that set was called previously, with `timestamp_prev <= timestamp`. If there are multiple such values, it returns the value associated with the largest timestamp_prev. If there are no values, it returns "".
+
+The approach is very similar to the snapshot id. Timestamp by naturally is auto incrementing, so we can design the hashmap with key is key string, and value a TreeMap of <timestamp, value> as entries. 
+
+```java
+class TimeMap {
+
+    private HashMap<String, TreeMap<Integer, String>> map; // {key, to a hashmap of {timestamp, value pairs}
+    
+    public TimeMap(){
+        map = new HashMap<>();    
+    }
+    
+    public void set(String key, String value, int timestamp){
+        if(!map.containsKey(key)){
+            map.put(key, new TreeMap<>());
+        }
+        TreeMap<Integer, String> pairs = map.get(key);
+        pairs.put(timestamp, value);
+        map.put(key, pairs);
+    }
+    
+    /**
+     * get the value closest to the given timestamp of given key
+     * if key doesn't exist return empty string 
+     */
+    public String get(String key, int timestamp){
+        if(!map.containsKey(key)){
+            return "";
+        }
+        TreeMap<Integer, String> values = map.get(key);
+        
+        Map.Entry<Integer, String> entry = values.floorEntry(timestamp);
+        
+        if(entry != null){
+            String val = entry.getValue();
+            return val;
+        }
+        else {
+            return "";
+        }
+    }
+}
+```
+
+Time complexity: Assume the average inner TreeMap size is N.
+- `set()`: standalone `set()` call takes O(logN) since outer hashmap takes O(1) to access and inner treeMap put/get dominates the 
+- `get()`: hashmap get(key) takes O(1) time, and finding the `floorEntry` takes O(logN). 

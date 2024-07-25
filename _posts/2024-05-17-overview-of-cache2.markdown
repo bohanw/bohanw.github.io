@@ -10,7 +10,7 @@ This problem is from a [leetcode discussion post](https://leetcode.com/discuss/
 The problem starts with implementation of standard in memory store to support get, put, and delete, then following with the support of transaction and three new APIs: `begin`, `commit` and `rollback`.  
 
 For transaction begin will begin() call to create a new context, and end the context with commit(). In between, any operations to access or modify the data store will not persist.
-'''
+```
 db.set(key0, val0)
 db.get(key0) => return val0
 db.begin()
@@ -26,10 +26,10 @@ db.set(k0, v0)
 db.get(k0) =>retrun v0
 db.rollback()
 db.get(k0) =>error as k0 value hasn't commit
-'''
+```
 We introduce new data structure, a separate dictionary to store data of current transaction. Assuming key and values are both string, we build on top of part 1. 
 
-'''java
+```java
 public class TransactionStore{
     Map<String, String> datastore;
 
@@ -50,7 +50,7 @@ public class TransactionStore{
 
 Now we add new hashmap to keep track of KV pairs during a transaction. 
 
-'''java
+```java
  public class TransactStore {
         
         Map<String, String> store;
@@ -124,7 +124,7 @@ Now we add new hashmap to keep track of KV pairs during a transaction.
             transactionStore.remove(key);
         }
     }
-'''
+```
 
 Since Java hash map operates on object, I distinguish when `transactionStore`  is Null and `transactionStore` is created but has no key-value pairs. The former means current store is outside a transaction, while the latter means data store is within a transaction and it is possible no modifications are made. 
 
@@ -135,7 +135,7 @@ Part 3 improves to support nested transaction, meaning a child transaction spawn
 
 The hierarchical structure of nested transactions, as well as the order of starting and returning back one transact resembles function calls, and thus the push and pop of a stack. I approach this problem with a stack of `transactionStore`.  To begin transaction is to create one stack of transaction and copy all key value pair of top of transaction stack. To rollback means to pop off current stack.
 
-'''java
+```java
 class TransactStore {
     
     Map<String, String> store;
@@ -200,7 +200,7 @@ class TransactStore {
     }
 }
     
-'''
+```
 Time Complexity:
 
 O(1) for set, get and delete
@@ -211,7 +211,7 @@ This is a screen problem I came across at Tesla, similar to [this post.](https:/
 
 The requirements for the problem is as follows:
 
-'''
+```
 Implement a key-value cache with capacity which include:
 
  Expire Time - entry becomes expire if the expirationTime < currentTime
@@ -241,7 +241,7 @@ Implement a key-value cache with capacity which include:
  Time +=5; // simulate sleep for 5 sec
  c.set("D",4,1,15 ); // should evict B because 3<5 and B expired// now cache has {"A" “C" "D"}
  c.get("A"); // return 1c.set("E"5,5,150 );// should evict A,LRU
- '''
+```
  My focus is to skew faster get(key) and eviction. 
 
 ### 1st approach:

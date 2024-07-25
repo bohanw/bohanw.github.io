@@ -21,7 +21,7 @@
 title: My Ramblings 
 email: your-email@example.com
 description: >- # this means to ignore newlines until "baseurl:"
-  湾区硬件转码农碎碎念
+  This is my blahblah
 domain: bohanw.github.io
 url: https://bohanw.github.io # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: jekyllrb

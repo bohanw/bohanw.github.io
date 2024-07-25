@@ -1,9 +1,9 @@
 ---
-layout: post
+layout: default
 title:  "Overview of KV store Interview Problems I"
 tag: "coding"
+categories: coding interview
 ---
-
 Over the several months of interviews I frequently encountered problems to design KV store, cache, of various flavors. This post is intended to summarize thought processes to following problems, and to identify any patterns, if possible, to similar problems. For simplicity, I will assume all key values in these problems are integers.
 
 For cache, at least it should support the put(k, v) and get(k) API. Eviction logic is also critical key. 

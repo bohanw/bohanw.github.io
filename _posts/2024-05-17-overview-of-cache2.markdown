@@ -1,12 +1,9 @@
 ---
-layout: post
+layout: default
 title:  "Overview of KV store Interview Problems (II)"
 tag: "coding"
+categories: coding interview
 ---
-
-
-## Rank Cache
-
 ## Transactional KV store
 This problem is from a [leetcode discussion post](https://leetcode.com/discuss/interview-question/279913/bloomberg-onsite-key-value-store-with-transactions)
 The transaction 

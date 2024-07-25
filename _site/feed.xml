@@ -1,4 +1,309 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.5">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2024-05-16T17:44:02-07:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Your awesome title</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><entry><title type="html">Welcome to Jekyll!</title><link href="http://localhost:4000/jekyll/update/2024/05/16/welcome-to-jekyll.html" rel="alternate" type="text/html" title="Welcome to Jekyll!" /><published>2024-05-16T17:28:46-07:00</published><updated>2024-05-16T17:28:46-07:00</updated><id>http://localhost:4000/jekyll/update/2024/05/16/welcome-to-jekyll</id><content type="html" xml:base="http://localhost:4000/jekyll/update/2024/05/16/welcome-to-jekyll.html"><![CDATA[<p>You’ll find this post in your <code class="language-plaintext highlighter-rouge">_posts</code> directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run <code class="language-plaintext highlighter-rouge">jekyll serve</code>, which launches a web server and auto-regenerates your site when a file is updated.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2024-07-24T23:20:31-07:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">My Ramblings</title><subtitle>湾区硬件转码农碎碎念</subtitle><entry><title type="html">SystemVerilog constraint of Random Input Array Distribution to Queues</title><link href="http://localhost:4000/asic/interview/2024/05/20/sv-constraint-dist-queue.html" rel="alternate" type="text/html" title="SystemVerilog constraint of Random Input Array Distribution to Queues" /><published>2024-05-20T00:00:00-07:00</published><updated>2024-05-20T00:00:00-07:00</updated><id>http://localhost:4000/asic/interview/2024/05/20/sv-constraint-dist-queue</id><content type="html" xml:base="http://localhost:4000/asic/interview/2024/05/20/sv-constraint-dist-queue.html"><![CDATA[<p>This is an very interesting SV constraint problem I came across in a FAANG design verification screen. Inside a SV class, given a input associative array, and three queues, after <code class="language-plaintext highlighter-rouge">class.randomize()</code> function call, would like to randomly distribute elements in  associative array to three queues. 
+ßß
+I struggled a lot with the this interview question. After some experimentation I think the challenge are what are the random variables in the class, what constraints are required and how to distribute and populate the output queues. 
+My approach is to define random queue that define and assignment of <code class="language-plaintext highlighter-rouge">input_array</code> in the same index. I will use <code class="language-plaintext highlighter-rouge">post_randomize()</code> function to populate elements of three queues in input_array based on the assingment from <code class="language-plaintext highlighter-rouge">queue_assignments</code></p>
+
+<div class="language-verilog highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">class</span> <span class="n">Packet</span><span class="p">;</span>
+    <span class="c1">// Assuming the elements are of type int</span>
+    <span class="kt">int</span> <span class="n">input_array</span><span class="p">[];</span>
+    <span class="kt">int</span> <span class="n">queue1</span><span class="p">[$],</span> <span class="n">queue2</span><span class="p">[$],</span> <span class="n">queue3</span><span class="p">[$];</span>
+
+    <span class="c1">// Array to keep track of which queue each element goes to</span>
+    <span class="k">rand</span> <span class="kt">int</span> <span class="n">queue_assignments</span><span class="p">[];</span>
+
+    <span class="c1">// Constructor to initialize the input array</span>
+    <span class="k">function</span> <span class="k">new</span><span class="p">(</span><span class="kt">int</span> <span class="n">arr</span><span class="p">[]);</span>
+        <span class="n">input_array</span> <span class="o">=</span> <span class="n">arr</span><span class="p">;</span>
+        <span class="n">queue_assignments</span> <span class="o">=</span> <span class="k">new</span><span class="p">[</span><span class="n">arr</span><span class="p">.</span><span class="nb">size</span><span class="p">()];</span>
+    <span class="k">endfunction</span>
+
+    <span class="c1">// Constraint to distribute elements</span>
+    <span class="k">constraint</span> <span class="n">distribute_elements</span> <span class="o">{</span>
+        <span class="c1">// Ensure each element in input_array is assigned to a queue</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="n">input_array</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">{</span>
+            <span class="n">queue_assignments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="n">queue_assignments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="c1">// Post-randomize function to actually distribute elements</span>
+    <span class="k">function</span> <span class="kt">void</span> <span class="n">post_randomize</span><span class="p">();</span>
+      <span class="k">foreach</span> <span class="p">(</span><span class="n">input_array</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">begin</span>
+            <span class="k">case</span><span class="p">(</span><span class="n">queue_assignments</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="mi">1</span><span class="o">:</span> <span class="n">queue1</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">input_array</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+                <span class="mi">2</span><span class="o">:</span> <span class="n">queue2</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">input_array</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+                <span class="mi">3</span><span class="o">:</span> <span class="n">queue3</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">input_array</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+                <span class="nl">default:</span> <span class="p">$</span><span class="n">fatal</span><span class="p">(</span><span class="s">"Invalid queue assignment"</span><span class="p">);</span>
+            <span class="k">endcase</span>
+      <span class="k">end</span>
+    <span class="k">endfunction</span>
+<span class="k">endclass</span>
+</code></pre></div></div>
+
+<p>Sample testbench and simulation results:</p>
+<div class="language-verilog highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">module</span> <span class="n">tb</span><span class="p">;</span>
+  <span class="n">Packet</span> <span class="n">pkt</span><span class="p">;</span>
+  <span class="kt">bit</span><span class="p">[</span><span class="mi">3</span><span class="o">:</span><span class="mi">0</span><span class="p">]</span> <span class="n">num</span><span class="p">;</span>
+  <span class="c1">// Create a new packet, randomize it and display contents</span>
+  <span class="k">initial</span> <span class="k">begin</span>
+    <span class="n">pkt</span> <span class="o">=</span> <span class="k">new</span><span class="p">(</span><span class="o">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="o">}</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">pkt</span><span class="p">.</span><span class="n">randomize</span><span class="p">())</span> <span class="k">begin</span>
+        <span class="p">$</span><span class="nb">error</span><span class="p">(</span><span class="s">"fail to rand"</span><span class="p">);</span>
+    <span class="k">end</span>
+    <span class="p">$</span><span class="nb">display</span><span class="p">(</span><span class="s">"queue1"</span><span class="p">,</span> <span class="n">pkt</span><span class="p">.</span><span class="n">queue1</span><span class="p">);</span>
+    <span class="p">$</span><span class="nb">display</span><span class="p">(</span><span class="s">"queue2"</span><span class="p">,</span> <span class="n">pkt</span><span class="p">.</span><span class="n">queue2</span><span class="p">);</span>
+    <span class="p">$</span><span class="nb">display</span><span class="p">(</span><span class="s">"queue3"</span><span class="p">,</span> <span class="n">pkt</span><span class="p">.</span><span class="n">queue3</span><span class="p">);</span>
+  <span class="k">end</span> 
+<span class="k">endmodule</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>queue1'{1, 3, 5, 6, 8} 
+queue2'{9} 
+queue3'{2, 4, 7} 
+           V C S   S i m u l a t i o n   R e p o r t 
+Time: 0 ns
+CPU Time:      0.420 seconds;       Data structure size:   0.0Mb
+</code></pre></div></div>]]></content><author><name></name></author><category term="asic" /><category term="interview" /><category term="dv asic" /><summary type="html"><![CDATA[This is an very interesting SV constraint problem I came across in a FAANG design verification screen. Inside a SV class, given a input associative array, and three queues, after class.randomize() function call, would like to randomly distribute elements in associative array to three queues. ßß I struggled a lot with the this interview question. After some experimentation I think the challenge are what are the random variables in the class, what constraints are required and how to distribute and populate the output queues. My approach is to define random queue that define and assignment of input_array in the same index. I will use post_randomize() function to populate elements of three queues in input_array based on the assingment from queue_assignments]]></summary></entry><entry><title type="html">Overview of KV store Interview Problems I</title><link href="http://localhost:4000/coding/interview/2024/05/17/overview-of-cache.html" rel="alternate" type="text/html" title="Overview of KV store Interview Problems I" /><published>2024-05-17T00:00:00-07:00</published><updated>2024-05-17T00:00:00-07:00</updated><id>http://localhost:4000/coding/interview/2024/05/17/overview-of-cache</id><content type="html" xml:base="http://localhost:4000/coding/interview/2024/05/17/overview-of-cache.html"><![CDATA[<p>Over the several months of interviews I frequently encountered problems to design KV store, cache, of various flavors. This post is intended to summarize thought processes to following problems, and to identify any patterns, if possible, to similar problems. For simplicity, I will assume all key values in these problems are integers.</p>
+
+<p>For cache, at least it should support the put(k, v) and get(k) API. Eviction logic is also critical key.</p>
+
+<h2 id="lru">LRU</h2>
+
+<p>LRU cache, from the leetcode quesiton prompt, takes a capacity argument for maximum size and, two API get and put() in average O(1) time complexity.  Key challenge is to maintain the least-recently used</p>
+
+<ul>
+  <li>eviction policy when cache is full.</li>
+  <li>access or update to a key already exists in cache.</li>
+</ul>
+
+<p>Modeling the order of access can use a linked list of key-value pairs where the head is the least recently used, and the tail is the most recently used. Linked list offers O(1) on insert and remove. However LinkedList does not provide O(1) time complexity to update cache by the correct index whenever a key is recently accessed by either get or put, so we need a another data structure to bookkeep current keys inside the cache. LinkedList  offers O(1) to remove or insert a node, and we can take advantage of the doubly linked list with both prev and next pointer.</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">// Linked List node class </span>
+    <span class="kd">class</span> <span class="nc">Node</span><span class="o">{</span>
+        <span class="nc">Node</span> <span class="n">prev</span><span class="o">;</span>
+        <span class="nc">Node</span> <span class="n">next</span><span class="o">;</span>
+        <span class="kt">int</span> <span class="n">key</span><span class="o">;</span>
+        <span class="kt">int</span> <span class="n">value</span><span class="o">;</span>
+        
+        <span class="kd">public</span> <span class="nf">Node</span><span class="o">(</span><span class="kt">int</span> <span class="n">k</span><span class="o">,</span> <span class="kt">int</span> <span class="n">v</span><span class="o">){</span>
+            <span class="k">this</span><span class="o">.</span><span class="na">key</span> <span class="o">=</span> <span class="n">k</span><span class="o">;</span>
+            <span class="k">this</span><span class="o">.</span><span class="na">value</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+		
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">capacity</span><span class="o">;</span><span class="c1">//capacity of the </span>
+    <span class="kd">private</span> <span class="nc">HashMap</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Node</span><span class="o">&gt;</span> <span class="n">map</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">HashMap</span><span class="o">&lt;&gt;();</span> <span class="c1">// integer key to the linked node that stores the key </span>
+    <span class="kd">private</span> <span class="nc">Node</span> <span class="n">head</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Node</span><span class="o">(-</span><span class="mi">1</span><span class="o">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">);</span> <span class="c1">// head node, beginning of the </span>
+    <span class="kd">private</span> <span class="nc">Node</span> <span class="n">tail</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Node</span><span class="o">(-</span><span class="mi">1</span><span class="o">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">);</span> <span class="c1">// end of linked list</span>
+    
+    <span class="kd">public</span> <span class="nf">LRUCache</span><span class="o">(</span><span class="kt">int</span> <span class="n">capacity</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">capacity</span> <span class="o">=</span> <span class="n">capacity</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">head</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">tail</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">tail</span><span class="o">.</span><span class="na">prev</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">head</span><span class="o">;</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<p>The head is the least recently used key,  and the tail should be most recently accessed element.</p>
+
+<p>To maintain readability we can add two new functions to handle removing node from the lined list and update a node to the end</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">// append curr to the tail from the most recent access</span>
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">update</span><span class="o">(</span><span class="nc">Node</span> <span class="n">curr</span><span class="o">){</span>
+        <span class="n">curr</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">tail</span><span class="o">;</span>
+        <span class="n">tail</span><span class="o">.</span><span class="na">prev</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">curr</span><span class="o">;</span>
+        <span class="n">curr</span><span class="o">.</span><span class="na">prev</span> <span class="o">=</span> <span class="n">tail</span><span class="o">.</span><span class="na">prev</span><span class="o">;</span>
+        <span class="n">tail</span><span class="o">.</span><span class="na">prev</span> <span class="o">=</span> <span class="n">curr</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">//Remove key from old index from the most recent access(put/get)</span>
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">remove</span><span class="o">(</span><span class="nc">Node</span> <span class="n">curr</span><span class="o">){</span>
+        <span class="n">curr</span><span class="o">.</span><span class="na">prev</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">curr</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
+        <span class="n">curr</span><span class="o">.</span><span class="na">next</span><span class="o">.</span><span class="na">prev</span><span class="o">=</span>  <span class="n">curr</span><span class="o">.</span><span class="na">prev</span><span class="o">;</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<p>With the help of data structure and two utility functions, we can implement the required APIs as follows</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="kd">public</span> <span class="kt">int</span> <span class="nf">get</span><span class="o">(</span><span class="kt">int</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span><span class="o">(!</span><span class="n">map</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="n">key</span><span class="o">)){</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+        <span class="o">}</span>  
+        <span class="nc">Node</span> <span class="n">curr</span> <span class="o">=</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+        
+        <span class="c1">//update the previous AND next node pointer because once</span>
+        <span class="c1">//current node is accessed, it will be removed and moved to the tail</span>
+        <span class="c1">//to maintain LRU</span>
+        <span class="n">remove</span><span class="o">(</span><span class="n">curr</span><span class="o">);</span>
+        <span class="n">update</span><span class="o">(</span><span class="n">curr</span><span class="o">);</span> <span class="c1">// move to tail</span>
+        
+        <span class="k">return</span> <span class="n">curr</span><span class="o">.</span><span class="na">value</span><span class="o">;</span>
+    <span class="o">}</span>
+    
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">put</span><span class="o">(</span><span class="kt">int</span> <span class="n">key</span><span class="o">,</span> <span class="kt">int</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// if key already exists in the cache</span>
+        <span class="c1">// node with the key is accessed so need to remove</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">map</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="n">key</span><span class="o">)){</span>
+            <span class="nc">Node</span> <span class="n">oldNode</span> <span class="o">=</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+            <span class="n">remove</span><span class="o">(</span><span class="n">oldNode</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="nc">Node</span> <span class="n">newNode</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Node</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+        <span class="n">map</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">newNode</span><span class="o">);</span>
+        <span class="n">update</span><span class="o">(</span><span class="n">newNode</span><span class="o">);</span>     
+        <span class="c1">//exceeds capacity, need evict LRU key, that is the node at the beggining</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">map</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&gt;</span> <span class="n">capacity</span><span class="o">){</span>
+            <span class="nc">Node</span> <span class="n">nodeToRemove</span> <span class="o">=</span> <span class="n">head</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
+            <span class="n">remove</span><span class="o">(</span><span class="n">nodeToRemove</span><span class="o">);</span>
+            <span class="n">map</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">nodeToRemove</span><span class="o">.</span><span class="na">key</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="lfu">LFU</h2>
+<p>Least frequently used mechanism, as the name suggests, requires keeping track of frequencies of each key.
+Following the leetcode <a href="https://leetcode.com/problems/lfu-cache">problem prompt</a> and API restrictions as follows</p>
+<ul>
+  <li>LFU cache constructor takes an arugment of int capacity</li>
+  <li>LFU maintains a user counter for each key to track frequency.</li>
+  <li><code class="language-plaintext highlighter-rouge">int get(key)</code> to obtain the value of given key</li>
+  <li><code class="language-plaintext highlighter-rouge">void put(key, value)</code> set thew new (key,value) entry inside cache. If full, eviction policy follows choosing the least frequently used key based on the user counter. If multiple candidates, following LRU policy to choose the candidate among these keys.</li>
+</ul>
+
+<p>The above requirements bring the constructor and data structures of how</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">private</span> <span class="kt">int</span> <span class="n">minFreq</span><span class="o">;</span> <span class="c1">// user counter</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">cap</span><span class="o">;</span>  <span class="c1">// capacity</span>
+</code></pre></div></div>
+<p>Next, we need a hashmap to store key-value pairs. We design the cache to include the frequency value as a compounded value pairs</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">// Track key, &lt;frequency, cache value&gt; look up by the key</span>
+    <span class="kd">private</span> <span class="nc">HashMap</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Pair</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span><span class="nc">Integer</span><span class="o">&gt;&gt;</span> <span class="n">keyToFreqValuePairMap</span><span class="o">;</span>
+</code></pre></div></div>
+<p>As the problem statements hint, need LRU policy to elect the evicted key more than one LFU keys. One may leverage <code class="language-plaintext highlighter-rouge">LinkedHashSet</code> in Java as the underlying implementation is doubly linked list. Another option is to use <code class="language-plaintext highlighter-rouge">ArrayDeque</code>.</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">// frequency to set of keys with such frequency</span>
+    <span class="kd">private</span> <span class="nc">HashMap</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">LinkedHashSet</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;&gt;</span> <span class="n">frequencyList</span><span class="o">;</span>
+</code></pre></div></div>
+
+<p>For <code class="language-plaintext highlighter-rouge">get(key)</code>,</p>
+<ul>
+  <li>attempt to obtain value and its frequency given key from the <code class="language-plaintext highlighter-rouge">keyToFreqValuePairMap</code>.</li>
+  <li>increment frequnecy related to key
+– remove key from list of keys by frequecy from <code class="language-plaintext highlighter-rouge">frequencyList</code>
+– clean up frequencyList if no such frequency exists inside cache
+– if the removed key is minFreq, update the minFreq</li>
+</ul>
+
+<p>For <code class="language-plaintext highlighter-rouge">put(key, value)</code></p>
+
+<p>For cache eviction, use the iterator <code class="language-plaintext highlighter-rouge">next()</code> API call from the value of LinkedHashSet to obtain the next candidate to be evicted.</p>
+<ul>
+  <li>Get the frequency-value pair from the <code class="language-plaintext highlighter-rouge">keyToFreqValuePairMap</code> if input key already exists, update  new value, update frequency and return</li>
+  <li>otherwise. First check if capacity is reached. Eviction is reached, otherwise, this is a new key , set its freq to 1 and  reset minFreq = 1, insert the key to cache</li>
+</ul>
+
+<h2 id="snapshot-based-kv">Snapshot Based KV</h2>
+<p>This is a phone screen question from a startup, very similar to <a href="https://leetcode.com/problems/snapshot-array/description/">Leetcode 1146</a>.
+Key difference is inthe <code class="language-plaintext highlighter-rouge">get()</code> API, expected API to take both index/key, and a snapshot_id. The output is the value of given index at the time snapshot <code class="language-plaintext highlighter-rouge">snap_id</code> was taken.</p>
+<ul>
+  <li>A clarifying question worth asking is what if there is no match of <code class="language-plaintext highlighter-rouge">snap_id</code> of a given index? Assume the qeustions asks to find the maximum closest <code class="language-plaintext highlighter-rouge">snap_id</code>.</li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">get</span><span class="o">(</span><span class="kt">int</span> <span class="n">index</span><span class="o">,</span> <span class="kt">int</span> <span class="n">snap_id</span><span class="o">)</span> <span class="o">;</span>
+</code></pre></div></div>
+<p>Snapshot KV class need to track the current snapshot id, as an always increment key and increment whenver a ` void snap()` API is called.
+Data structure choice can be nested map, where the outer layer is hashmap, key is index/key, and value is another map. The key of inner map is snapshot id, and value of inner map is value at snapshot id.</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">private</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">TreeMap</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Integer</span><span class="o">&gt;&gt;</span> <span class="n">snapshotCache</span><span class="o">;</span>
+</code></pre></div></div>
+<p>Note the implementation of inner map interface can be as simple as hashmap, or a treemap wiht ordering of keys. Note one need to give clear explanation of pros and cons of each choice. A hashmap is fast for set and get value, however to address the snapshot requirements of finding the closest maximum snapshot id, worst case can be O(N) since hashmap provides no ordering of keys. If keys are sorted, it is equivalent to do a binary search over order keys to find the closest snapshot_id. TreeMap will be the better choice since it gives O(log N) time complexity over the binary search.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+    <span class="c1">//brute force using linear scan using hashmap</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">get</span><span class="o">(</span><span class="kt">int</span> <span class="n">index</span><span class="o">,</span> <span class="kt">int</span> <span class="n">snap_id</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">HashMap</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span><span class="nc">Integer</span><span class="o">&gt;</span> <span class="n">map</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">index</span><span class="o">);</span>
+        <span class="kt">int</span> <span class="n">maxKey</span> <span class="o">=</span> <span class="nc">Integer</span><span class="o">.</span><span class="na">MIN_VALUE</span><span class="o">;</span>
+        <span class="kt">int</span> <span class="n">resultKey</span> <span class="o">=</span> <span class="n">maxKey</span><span class="o">;</span>
+        <span class="k">for</span><span class="o">(</span><span class="nc">Map</span><span class="o">.</span><span class="na">Entry</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Integer</span><span class="o">&gt;</span> <span class="n">e</span> <span class="o">:</span> <span class="n">map</span><span class="o">.</span><span class="na">entrySet</span><span class="o">()){</span>
+           <span class="kt">int</span> <span class="n">key</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="na">getKey</span><span class="o">();</span>
+           <span class="k">if</span><span class="o">(</span><span class="n">key</span> <span class="o">&lt;=</span> <span class="n">snap_id</span><span class="o">){</span>
+               <span class="n">resultKey</span> <span class="o">=</span> <span class="nc">Math</span><span class="o">.</span><span class="na">max</span><span class="o">(</span><span class="n">resultKey</span><span class="o">,</span> <span class="n">key</span><span class="o">);</span>
+           <span class="o">}</span> 
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">resultKey</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="c1">//using treemap and floorEntry() to binary search on snap_id</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">get</span><span class="o">(</span><span class="kt">int</span> <span class="n">index</span><span class="o">,</span> <span class="kt">int</span> <span class="n">snap_id</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">arr</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">index</span><span class="o">).</span><span class="na">floorEntry</span><span class="o">(</span><span class="n">snap_id</span><span class="o">).</span><span class="na">getValue</span><span class="o">();</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+<p>Time complexity:</p>
+
+<h2 id="time-based-kv">Time based KV</h2>
+<p>This is the <a href="https://leetcode.com/problems/time-based-key-value-store/">leetcode 981</a>. The prmpot is to design a data structure that</p>
+<ul>
+  <li>stores multiple values for the same key</li>
+  <li>able to retrieve the key’s value at a certain timestamp.</li>
+</ul>
+
+<p>Specifically, <code class="language-plaintext highlighter-rouge">String get(String key, int timestamp)</code> returns a value such that set was called previously, with <code class="language-plaintext highlighter-rouge">timestamp_prev &lt;= timestamp</code>. If there are multiple such values, it returns the value associated with the largest timestamp_prev. If there are no values, it returns “”.</p>
+
+<p>The approach is very similar to the snapshot id. Timestamp by naturally is auto incrementing, so we can design the hashmap with key is key string, and value a TreeMap of &lt;timestamp, value&gt; as entries.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">TimeMap</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="nc">HashMap</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">TreeMap</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;&gt;</span> <span class="n">map</span><span class="o">;</span> <span class="c1">// {key, to a hashmap of {timestamp, value pairs}</span>
+    
+    <span class="kd">public</span> <span class="nf">TimeMap</span><span class="o">(){</span>
+        <span class="n">map</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">HashMap</span><span class="o">&lt;&gt;();</span>    
+    <span class="o">}</span>
+    
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">set</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="nc">String</span> <span class="n">value</span><span class="o">,</span> <span class="kt">int</span> <span class="n">timestamp</span><span class="o">){</span>
+        <span class="k">if</span><span class="o">(!</span><span class="n">map</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="n">key</span><span class="o">)){</span>
+            <span class="n">map</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="k">new</span> <span class="nc">TreeMap</span><span class="o">&lt;&gt;());</span>
+        <span class="o">}</span>
+        <span class="nc">TreeMap</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;</span> <span class="n">pairs</span> <span class="o">=</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+        <span class="n">pairs</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">timestamp</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+        <span class="n">map</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">pairs</span><span class="o">);</span>
+    <span class="o">}</span>
+    
+    <span class="cm">/**
+     * get the value closest to the given timestamp of given key
+     * if key doesn't exist return empty string 
+     */</span>
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">get</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">int</span> <span class="n">timestamp</span><span class="o">){</span>
+        <span class="k">if</span><span class="o">(!</span><span class="n">map</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="n">key</span><span class="o">)){</span>
+            <span class="k">return</span> <span class="s">""</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="nc">TreeMap</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;</span> <span class="n">values</span> <span class="o">=</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+        
+        <span class="nc">Map</span><span class="o">.</span><span class="na">Entry</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;</span> <span class="n">entry</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="na">floorEntry</span><span class="o">(</span><span class="n">timestamp</span><span class="o">);</span>
+        
+        <span class="k">if</span><span class="o">(</span><span class="n">entry</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span>
+            <span class="nc">String</span> <span class="n">val</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="na">getValue</span><span class="o">();</span>
+            <span class="k">return</span> <span class="n">val</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">else</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="s">""</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Time complexity: Assume the average inner TreeMap size is N.</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">set()</code>: standalone <code class="language-plaintext highlighter-rouge">set()</code> call takes O(logN) since outer hashmap takes O(1) to access and inner treeMap put/get dominates the</li>
+  <li><code class="language-plaintext highlighter-rouge">get()</code>: hashmap get(key) takes O(1) time, and finding the <code class="language-plaintext highlighter-rouge">floorEntry</code> takes O(logN).</li>
+</ul>]]></content><author><name></name></author><category term="coding" /><category term="interview" /><category term="coding" /><summary type="html"><![CDATA[Over the several months of interviews I frequently encountered problems to design KV store, cache, of various flavors. This post is intended to summarize thought processes to following problems, and to identify any patterns, if possible, to similar problems. For simplicity, I will assume all key values in these problems are integers.]]></summary></entry><entry><title type="html">Overview of KV store Interview Problems (II)</title><link href="http://localhost:4000/coding/interview/2024/05/17/overview-of-cache2.html" rel="alternate" type="text/html" title="Overview of KV store Interview Problems (II)" /><published>2024-05-17T00:00:00-07:00</published><updated>2024-05-17T00:00:00-07:00</updated><id>http://localhost:4000/coding/interview/2024/05/17/overview-of-cache2</id><content type="html" xml:base="http://localhost:4000/coding/interview/2024/05/17/overview-of-cache2.html"><![CDATA[<h2 id="transactional-kv-store">Transactional KV store</h2>
+<p>This problem is from a <a href="https://leetcode.com/discuss/interview-question/279913/bloomberg-onsite-key-value-store-with-transactions">leetcode discussion post</a>
+The transaction</p>
+
+<h2 id="expiry-priority-cache">Expiry Priority Cache</h2>
+
+<h2 id="reflection">Reflection</h2>
+<ul>
+  <li>Understand the problem and asking any clarifying questions are crucial in success. Unlike many other algorithms-heavy coding problems, above design problems need more communications about thought process to address the cache features and describe what data structures and how chosen data structures address these requirements.</li>
+  <li>Try and clarify any confusions during the interview. For interactive and open-ended problems, one may waste time working on a solution trivial or completely incorrect from the requirements from the interviewer.</li>
+  <li>Practice “communicating over pseudocode/typing”. I believe success of solving above problems rely more on effectiveness of thought process. I was not comfortable typing and talking together in a virtual interview at first, and I realized how much time I have spent not producing effective code in a short time. Thought process is important but in the end interviewers need to see some code as deliverables. My personal way is to jot down key algorithms/data structures and reasoning behind it, and highlevel todos on implementation. For instance, I will jot down I need hashmap and doubly linked list, and why it will</li>
+  <li>Be very comfortable on common data structures in your interviewing programming language and common APIs and their time complexity. If possible, getting familiar with implementation of each data structure. For example, difference and time complexity of Java <code class="language-plaintext highlighter-rouge">HashMap</code> and <code class="language-plaintext highlighter-rouge">TreeMap</code>, C++ <code class="language-plaintext highlighter-rouge">std::unordered_map</code> and <code class="language-plaintext highlighter-rouge">std::map</code>.</li>
+  <li>Since 2023/2024, I have observed increaseing difficulties in coding challenges. The challenge is not necesarily on difficult algorithms or tricky math theorems or bit manupulations, but more on a combinations of code completion, code speed, time to reach a well-organized solution and effective communications to interviewer. Many problems are framed as follow ups to easier first problem or multiple series. I experienced many design-like problems in both screen and onsite, so practicing all above is worthwhile. Different companies may have different interview expecations or emphasis, and it is perfectly fine to ask and clarify any requirements in advance(how many problems each round, focusing on thought process or completion, etc).</li>
+</ul>]]></content><author><name></name></author><category term="coding" /><category term="interview" /><category term="coding" /><summary type="html"><![CDATA[Transactional KV store This problem is from a leetcode discussion post The transaction]]></summary></entry><entry><title type="html">Welcome to Jekyll!</title><link href="http://localhost:4000/jekyll/update/2024/05/16/welcome-to-jekyll.html" rel="alternate" type="text/html" title="Welcome to Jekyll!" /><published>2024-05-16T17:28:46-07:00</published><updated>2024-05-16T17:28:46-07:00</updated><id>http://localhost:4000/jekyll/update/2024/05/16/welcome-to-jekyll</id><content type="html" xml:base="http://localhost:4000/jekyll/update/2024/05/16/welcome-to-jekyll.html"><![CDATA[<p>You’ll find this post in your <code class="language-plaintext highlighter-rouge">_posts</code> directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run <code class="language-plaintext highlighter-rouge">jekyll serve</code>, which launches a web server and auto-regenerates your site when a file is updated.</p>
 
 <p>Jekyll requires blog post files to be named according to the following format:</p>
 
